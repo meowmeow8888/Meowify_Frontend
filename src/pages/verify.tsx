@@ -1,7 +1,10 @@
+import { useState } from "react"
 import logo from "../assets/logo.png"
 import NumberInput from "../components/NumberInput"
 
 function Verify() {
+  const [passcode, setPasscode] = useState([-1, -1, -1, -1, -1, -1])
+
   return (
     <>
       <div className="flex flex-col justify-center items-center">
@@ -14,7 +17,7 @@ function Verify() {
         </p>
       </div>
       <div className="flex flex-row justify-center gap-4 pt-10">
-        <NumberInput />
+        <NumberInput onChange={() => setPasscode}/>
       </div>
     </>
   )

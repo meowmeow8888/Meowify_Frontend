@@ -23,7 +23,7 @@ function Login() {
   }
 
   useEffect(() => {
-    setIsContDisabled(emailError || passwordInputValue.length <= 7)
+    setIsContDisabled(emailError || emailInputValue.length === 0 || passwordInputValue.length <= 7)
   }, [emailError, passwordInputValue])
 
   const handleContinue = () => {
@@ -48,6 +48,11 @@ function Login() {
       <div className="flex justify-center items-center flex-col gap-4">
         <Input
           placeholder="Email"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleContinue()
+            }
+          }}
           variant={emailError ? "error" : "text"}
           onBlur={e => checkSyntax(e.target.value)}
           value={emailInputValue}
@@ -60,6 +65,11 @@ function Login() {
         <div className="flex items-center border border-none outline-gray-400 outline-1 pr-3 rounded-sm hover:outline-white transition-colors duration-150 w-72">
           <Input
             placeholder="Password"
+            onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleContinue()
+            }
+          }}
             variant="icon"
             value={passwordInputValue}
             type={hidePassword ? "password" : "text"}
@@ -87,6 +97,7 @@ function Login() {
 
         <Button
           onClick={handleContinue}
+          
           disabled={isContDisabled}
           variant={isContDisabled ? "disabled" : "active"}
         >

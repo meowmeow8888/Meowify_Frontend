@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-function NumberInput() {
-  const inputRefs = useRef<HTMLInputElement[]>([]);
+function NumberInput({ onChange }: { onChange: Function }) {
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [focusPos, setFocusPos] = useState(0);
   const [values, setValues] = useState([-1, -1, -1, -1, -1, -1]);
 
   const changeValueIn = (value: number, index: number) => {
@@ -17,29 +16,25 @@ function NumberInput() {
     );
   };
 
+  const focusInput = (i: number) => {
+    const el = inputsRef.current[i];
+    console.log(el);
+    if (el) el.focus();
+  };
+
   const handleChange = (value: number, pos: number) => {
     if (!isNaN(value)) {
       changeValueIn(value % 10, pos);
-      inputRefs.current[(pos + 1) % 6].focus();
+      if (pos !== 5) {
+        focusInput(pos + 1);
+      }
     } else {
       changeValueIn(-1, pos);
-      inputRefs.current[(pos - 1) % 6].focus();
+      if (pos !== 0) {
+        focusInput(pos - 1);
+      }
     }
   };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Backspace") {
-      console.log("focuspos: " + focusPos);
-      handleChange(NaN, focusPos);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   return (
     <div className="flex gap-4">
@@ -47,16 +42,23 @@ function NumberInput() {
         <input
           key={i}
           ref={(el) => {
-            if (el) inputRefs.current[i] = el;
+            if (el) inputsRef.current[i] = el;
           }}
           value={values[i] !== -1 ? values[i] : ""}
-          className="w-14 h-16 outline-gray-400 text-center hover:outline-white border-none outline-1 rounded-sm transition-colors duration-150"
-          onChange={(e) => {
-            handleChange(parseInt(e.target.value), i);
-          }}
-          onFocus={() => {
-            console.log("I CHANGED THE WORLD: " + i);
-            setFocusPos(i);
+          className="w-14 h-16 outline-gray-400 text-center hover:outline-white focus:outline-white border-none outline-1 rounded-sm transition-colors duration-150"
+          onKeyDown={(e) => {
+            if (e.key == "Backspace") {
+              if (values[i] === -1) {
+                if (i !== 0) {
+                  e.preventDefault();
+                  focusInput(i - 1);
+                }
+              } else {
+                handleChange(NaN, i);
+              }
+            } else if (/^[0-9]$/.test(e.key)) {
+              handleChange(parseInt(e.key), i);
+            }
           }}
         />
       ))}
