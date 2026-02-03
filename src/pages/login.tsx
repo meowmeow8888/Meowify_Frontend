@@ -7,7 +7,6 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
 //TODO:
 // link fetch to the server
-// after cont -> nav to verify
 
 function Login() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/

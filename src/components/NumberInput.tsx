@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function NumberInput({ onChange }: { onChange: Function }) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
@@ -18,7 +18,6 @@ function NumberInput({ onChange }: { onChange: Function }) {
 
   const focusInput = (i: number) => {
     const el = inputsRef.current[i];
-    console.log(el);
     if (el) el.focus();
   };
 
@@ -35,6 +34,8 @@ function NumberInput({ onChange }: { onChange: Function }) {
       }
     }
   };
+
+  useEffect(() => {onChange(values)}, [values])
 
   return (
     <div className="flex gap-4">

@@ -12,7 +12,7 @@ function SignUp() {
     <>
       <div className="flex justify-center items-center py-2 flex-col">
         <img src={logo} className="w-sm h-auto" />
-        <p className="text-4xl text-gradient font-bold py-2">
+        <p className="text-4xl font-bold py-2">
           Sign Up and start listening!
         </p>
       </div>
