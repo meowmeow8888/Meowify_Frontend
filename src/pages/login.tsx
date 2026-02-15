@@ -25,14 +25,20 @@ function Login() {
     setIsContDisabled(emailError || emailInputValue.length === 0 || passwordInputValue.length <= 7)
   }, [emailError, passwordInputValue])
 
-  const handleContinue = () => {
-    fetch("http://localhost:8080", {
+  const handleContinue = async () => {
+    try {
+    const res = await fetch("http://localhost:8080", {
       method: "POST",
       body: JSON.stringify({
         email: emailInputValue,
         password: passwordInputValue,
       }),
-    })
+    });
+    const data = await res.json();//do smtng with this shit
+  }
+  catch {
+    console.log("meow")//take care of loading
+  }
     navigator("/verify")
   }
 

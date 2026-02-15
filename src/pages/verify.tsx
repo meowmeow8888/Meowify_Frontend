@@ -5,21 +5,22 @@ import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 
 function Verify() {
-  const [passcode, setPasscode] = useState([-1, -1, -1, -1, -1, -1]);
+  const [passcode, setPasscode] = useState("");
   const [isContDisabled, setIsContDisabled] = useState(true);
   const navigator = useNavigate();
 
   useEffect(() => {
-    if (passcode.includes(-1)) {
+    console.log(passcode)
+    if (passcode.includes("-")) {
       setIsContDisabled(true);
     } else {
       setIsContDisabled(false);
-      //handleContinue()
+      handleContinue()
     }
   }, [passcode]);
 
-  const handleContinue = () => {
-    fetch("http://localhost:8080", {
+  const handleContinue = async () => {
+    const res = await fetch("http://localhost:8080", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -28,20 +29,9 @@ function Verify() {
         passcode: passcode,
       }),
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Request failed");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log(data);
-        //check data
-        navigator("/home");
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    const data = await res.json()
+    //do smth
+    navigator("/home");
   };
 
   return (
@@ -56,7 +46,8 @@ function Verify() {
         </p>
       </div>
       <div className="flex flex-col items-center justify-center gap-8 py-10">
-        <NumberInput onChange={setPasscode} />
+        <NumberInput onChange={setPasscode} 
+        onEnter={handleContinue} />
       </div>
       <div className="flex flex-col justify-center items-center gap-3">
         <p

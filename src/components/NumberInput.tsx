@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-function NumberInput({ onChange }: { onChange: Function }) {
+function NumberInput({ onChange, onEnter } : {onChange: (value: string) => void; onEnter: () => void}) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   const [values, setValues] = useState([-1, -1, -1, -1, -1, -1]);
+
+  useEffect(() => {
+    onChange(values.join(""))
+  }, [values])
 
   const changeValueIn = (value: number, index: number) => {
     setValues((v) =>
@@ -35,8 +39,6 @@ function NumberInput({ onChange }: { onChange: Function }) {
     }
   };
 
-  useEffect(() => {onChange(values)}, [values])
-
   return (
     <div className="flex gap-4">
       {Array.from(values).map((_, i) => (
@@ -46,8 +48,14 @@ function NumberInput({ onChange }: { onChange: Function }) {
             if (el) inputsRef.current[i] = el;
           }}
           value={values[i] !== -1 ? values[i] : ""}
+          onChange={onChange(values)}
           className="w-14 h-16 outline-gray-400 text-center hover:outline-white focus:outline-white border-none outline-1 rounded-sm transition-colors duration-150"
           onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onEnter();
+              return;
+            }
             if (e.key == "Backspace") {
               if (values[i] === -1) {
                 if (i !== 0) {
