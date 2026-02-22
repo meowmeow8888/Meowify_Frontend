@@ -5,9 +5,6 @@ import { useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
-//TODO:
-// link fetch to the server
-
 function Login() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   const navigator = useNavigate()
@@ -27,19 +24,27 @@ function Login() {
 
   const handleContinue = async () => {
     try {
-    const res = await fetch("http://localhost:8080", {
+    const res = await fetch("http://localhost:8080/login", {
       method: "POST",
       body: JSON.stringify({
         email: emailInputValue,
         password: passwordInputValue,
       }),
     });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Login Failed");
+    }
+
     const data = await res.json();//do smtng with this shit
-  }
-  catch {
-    console.log("meow")//take care of loading
-  }
+    console.log("login successful:", data)
     navigator("/verify")
+
+  }
+  catch (error) {
+    console.log("Error:", error)//take care of loading
+  }
   }
 
   return (

@@ -48,7 +48,7 @@ function NumberInput({ onChange, onEnter } : {onChange: (value: string) => void;
             if (el) inputsRef.current[i] = el;
           }}
           value={values[i] !== -1 ? values[i] : ""}
-          onChange={onChange(values)}
+          onChange={() => onChange(values.join(""))}
           className="w-14 h-16 outline-gray-400 text-center hover:outline-white focus:outline-white border-none outline-1 rounded-sm transition-colors duration-150"
           onKeyDown={(e) => {
             if (e.key === "Enter") {

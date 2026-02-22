@@ -15,7 +15,7 @@ function Verify() {
       setIsContDisabled(true);
     } else {
       setIsContDisabled(false);
-      handleContinue()
+      // handleContinue()
     }
   }, [passcode]);
 
