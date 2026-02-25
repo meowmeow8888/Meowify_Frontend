@@ -49,7 +49,7 @@ function Login() {
 
   return (
     <>
-      <div className="flex justify-center items-center flex-col py-2 pb-14">
+      <div className="flex justify-center items-center flex-col py-2 pb-10">
         <img src={logo} className="w-sm h-auto" />
         <p className="text-6xl text-gradient font-bold">Welcome Back!</p>
       </div>
@@ -115,7 +115,7 @@ function Login() {
         </Button>
       </div>
 
-      <div className="flex justify-center items-center flex-row gap-2 py-2">
+      <div className="flex justify-center items-center flex-col gap-2 py-2">
         <p className="text-gray-400">Don't have an account already?</p>
         <p
           onClick={() => {
