@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-function NumberInput({ onChange, onEnter } : {onChange: (value: string) => void; onEnter: () => void}) {
+function NumberInput({ onChange, onEnter, passcodeError } : {onChange: (value: string) => void; onEnter: () => void; passcodeError: boolean}) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   const [values, setValues] = useState([-1, -1, -1, -1, -1, -1]);
@@ -49,7 +49,7 @@ function NumberInput({ onChange, onEnter } : {onChange: (value: string) => void;
           }}
           value={values[i] !== -1 ? values[i] : ""}
           onChange={() => onChange(values.join(""))}
-          className="w-14 h-16 outline-gray-400 text-center hover:outline-white focus:outline-white border-none outline-1 rounded-sm transition-colors duration-150"
+          className={`w-14 h-16 ${passcodeError ? "outline-red-400" : "outline-gray-400"} text-center hover:outline-white focus:outline-white border-none outline-1 rounded-sm transition-colors duration-150`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();

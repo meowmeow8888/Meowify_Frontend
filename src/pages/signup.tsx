@@ -25,9 +25,12 @@ function SignUp() {
   };
 
   const handleContinue = async () => {
+    checkPasswordSyntax(passwordInputValue)
+    if (passwordError) return
     try {
-      const res = await fetch("http://localhost:8080/login", {
+      const res = await fetch("http://localhost:8080/signup", {
         method: "POST",
+        credentials: "include", 
         body: JSON.stringify({
           email: emailInputValue,
           password: passwordInputValue,
@@ -35,15 +38,14 @@ function SignUp() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Sign Up Failed");
+        // add error and red shit
+        throw new Error("Sign Up Failed");
       }
 
-      const data = await res.json(); //do smtng with this shit
-      console.log("Sign Up successful:", data);
-      navigator("/verify");
+      console.log("Sign Up successful");
+      navigator("/login");
     } catch (error) {
-      console.log("Error:", error); //take care of loading
+      console.log("Error:", error); 
     }
   };
 
@@ -51,12 +53,12 @@ function SignUp() {
     setIsContDisabled(
       emailError ||
         emailInputValue.length === 0 ||
-        passwordInputValue.length <= 7,
+        passwordError,
     );
   }, [emailError, passwordInputValue]);
 
   return (
-    <>
+    <div className="bg-[radial-gradient(circle_at_top_left,#2a1450_0%,#000_60%)] h-screen">
       <div className="flex justify-center items-center py-2 flex-col">
         <img src={logo} className="w-sm h-auto" />
         <p className="text-4xl font-bold py-2 text-gradient">
@@ -81,8 +83,9 @@ function SignUp() {
             onChange={(e) => {
               setEmailInputValue(e.target.value);
               checkEmailSyntax(e.target.value);
-            }}/>
-          
+            }}
+          />
+
           {emailError && (
             <div className="flex flex-row gap-1">
               <AlertCircle className="w-4 text-red-400" />
@@ -92,10 +95,12 @@ function SignUp() {
 
           <div
             className={`flex items-center outline-1 pr-3 rounded-sm transition-colors duration-150 w-72 
-              ${passwordError 
-              ? `outline-red-400 hover:outline-[#bc5d5f]` 
-              : `outline-gray-400 hover:outline-white`}`}>
-            
+              ${
+                passwordError
+                  ? `outline-red-400 hover:outline-[#bc5d5f]`
+                  : `outline-gray-400 hover:outline-white`
+              }`}
+          >
             <Input
               placeholder="Password"
               onKeyDown={(e) => {
@@ -109,7 +114,7 @@ function SignUp() {
               type={hidePassword ? "password" : "text"}
               onChange={(e) => {
                 setPasswordInputValue(e.target.value);
-                checkPasswordSyntax(e.target.value);
+                passwordError && checkPasswordSyntax(e.target.value);
               }}
             />
 
@@ -122,17 +127,16 @@ function SignUp() {
               {hidePassword ? <Eye /> : <EyeOff />}
             </Button>
           </div>
-          {/* split to seperate paragraphs and add indiv checks for syntax */}
           {passwordError && (
             <div className="flex flex-row gap-1">
               <AlertCircle className="w-4 text-red-400" />
-              <p className="text-red-400 ">Please enter a valid password<br/>
-                password must contain:<br/>
-                One uppercase letter<br/>
-                One lowercase letter<br/>
-                One digit<br/>
-                length 8-32
-              </p>
+              <div className="flex flex-col">
+                <p className="text-red-400 ">password must contain:</p>
+                {!/[a-z]/.test(passwordInputValue) && <p className="text-red-400 ">• 1 lowercase letter</p>}
+                {!/[A-Z]/.test(passwordInputValue) && <p className="text-red-400 ">• 1 uppercase letter</p>}
+                {!/\d/.test(passwordInputValue) && <p className="text-red-400 ">• 1 digit</p>}
+                {!/^.{8,32}$/.test(passwordInputValue) && <p className="text-red-400 ">• Length 8-32</p>}
+              </div>
             </div>
           )}
 
@@ -143,7 +147,6 @@ function SignUp() {
           >
             Continue
           </Button>
-
         </div>
       </div>
 
@@ -151,14 +154,14 @@ function SignUp() {
         <p className="text-gray-400">Already have an account?</p>
         <p
           onClick={() => {
-            navigator("/");
+            navigator("/login");
           }}
           className="text-[#8c5af8] hover:text-[#ae6cff] cursor-pointer"
         >
           login
         </p>
       </div>
-    </>
+    </div>
   );
 }
 export default SignUp;

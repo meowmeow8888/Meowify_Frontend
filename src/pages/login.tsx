@@ -4,6 +4,7 @@ import logo from "../assets/logo.png"
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
+import { useAuth } from "../providers/AuthProvider";
 
 function Login() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -13,6 +14,8 @@ function Login() {
   const [passwordInputValue, setPasswordInputValue] = useState("")
   const [hidePassword, setHidePassword] = useState(true)
   const [isContDisabled, setIsContDisabled] = useState(true)
+  const { refreshSession } = useAuth();
+  const [loginError, setLoginError] = useState(false)
 
   const checkSyntax = (email: string) => {
     setEmailError(!emailRegex.test(email))
@@ -20,12 +23,16 @@ function Login() {
 
   useEffect(() => {
     setIsContDisabled(emailError || emailInputValue.length === 0 || passwordInputValue.length <= 7)
-  }, [emailError, passwordInputValue])
+  }, [emailError, emailInputValue, passwordInputValue])
 
   const handleContinue = async () => {
-    try {
+  try {
     const res = await fetch("http://localhost:8080/login", {
       method: "POST",
+      credentials: "include", 
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         email: emailInputValue,
         password: passwordInputValue,
@@ -33,22 +40,19 @@ function Login() {
     });
 
     if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || "Login Failed");
+      setLoginError(true)
+      throw new Error("Login failed");
     }
 
-    const data = await res.json();//do smtng with this shit
-    console.log("login successful:", data)
-    navigator("/verify")
+    navigator("/verify", {state: {emailInputValue, passwordInputValue}})
 
+  } catch (error) {
+    console.log("Error:", error);
   }
-  catch (error) {
-    console.log("Error:", error)//take care of loading
-  }
-  }
+};
 
   return (
-    <>
+    <div className="bg-[radial-gradient(circle_at_top_left,#2a1450_0%,#000_60%)] h-screen">
       <div className="flex justify-center items-center flex-col py-2 pb-10">
         <img src={logo} className="w-sm h-auto" />
         <p className="text-6xl text-gradient font-bold">Welcome Back!</p>
@@ -63,7 +67,7 @@ function Login() {
               handleContinue()
             }
           }}
-          variant={emailError ? "error" : "text"}
+          variant={emailError || loginError ? "error" : "text"}
           onBlur={e => checkSyntax(e.target.value)}
           value={emailInputValue}
           onChange={e => {
@@ -72,7 +76,7 @@ function Login() {
           }}
         />
 
-        <div className="flex items-center border border-none outline-gray-400 outline-1 pr-3 rounded-sm hover:outline-white transition-colors duration-150 w-72">
+        <div className={`flex items-center border border-none ${loginError ? "outline-red-400" : "outline-gray-400"} outline-1 pr-3 rounded-sm hover:outline-white transition-colors duration-150 w-72`}>
           <Input
             placeholder="Password"
             onKeyDown={(e) => {
@@ -105,6 +109,13 @@ function Login() {
           </div>
         )}
 
+        {loginError && (
+          <div className="flex flex-row gap-1">
+            <AlertCircle className="w-4 text-red-400" />
+            <p className="text-red-400 ">Email or Password are incorrect</p>
+          </div>
+        )}
+
         <Button
           onClick={handleContinue}
           
@@ -126,7 +137,7 @@ function Login() {
           sign up
         </p>
       </div>
-    </>
+    </div>
   )
 }
 export default Login
