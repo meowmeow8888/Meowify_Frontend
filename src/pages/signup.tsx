@@ -28,7 +28,7 @@ function SignUp() {
     checkPasswordSyntax(passwordInputValue)
     if (passwordError) return
     try {
-      const res = await fetch("http://localhost:8080/signup", {
+      const res = await fetch("https://localhost:8080/signup", {
         method: "POST",
         credentials: "include", 
         body: JSON.stringify({

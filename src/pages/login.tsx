@@ -26,7 +26,7 @@ function Login() {
 
   const handleContinue = async () => {
   try {
-    const res = await fetch("http://localhost:8080/login", {
+    const res = await fetch("https://localhost:8080/login", {
       method: "POST",
       credentials: "include", 
       headers: {

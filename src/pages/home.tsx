@@ -7,7 +7,7 @@ import AudioControl from "../components/AudioControl";
 import { useWebSocket } from "../hooks/UseWebsocket";
 import ContentFrame from "../components/ContentFrame";
 
-const WS_URL = "ws://localhost:8080/";
+const WS_URL = "wss://localhost:8080/";
 const base64ToUrl = (base64Data: string, contentType = "image/png") => {
   try {
     const byteCharacters = atob(base64Data);
@@ -43,41 +43,47 @@ function Home() {
   const [currentSongLen, setCurrentSongLen] = useState(180);
 
   // websocket handling
-  const handleAudioChunk = useCallback((chunk: ArrayBuffer) => {
-    const sb = sourceBufferRef.current;
-    isWaitingForChunk.current = false;
-    const audio = audioRef.current;
+  const handleAudioChunk = useCallback(
+    (chunk: ArrayBuffer) => {
+      const sb = sourceBufferRef.current;
+      const audio = audioRef.current;
 
-    if (sb && !sb.updating && queueRef.current.length === 0) {
-      try {
-        sb.appendBuffer(chunk);
-        
-        if (audio && audio.paused && serverState.playing && audio.readyState >= 2) {
-            audio.play().catch(console.error);
+      if (sb && !sb.updating && queueRef.current.length === 0) {
+        try {
+          sb.appendBuffer(chunk);
+        } catch (e) {
+          console.error("Error appending:", e);
+          isWaitingForChunk.current = false;
         }
-      } catch (e) {
-        console.error("Error appending buffer:", e);
+      } else {
+        queueRef.current.push(chunk);
       }
-    } else {
-      queueRef.current.push(chunk);
-    }
-  }, [serverState.playing]);
+
+      if (
+        audio &&
+        audio.paused &&
+        serverState.playing &&
+        audio.readyState >= 2
+      ) {
+        audio.play().catch(console.error);
+      }
+    },
+    [serverState.playing],
+  );
 
   const handleMessage = useCallback((msg: any) => {
     if (msg.type === "song_start") {
-      audioRef.current?.play().catch(console.error);
       setCurrentSongLen(Number(msg.song_len));
-      isWaitingForChunk.current = false;
       queueRef.current = [];
+      isWaitingForChunk.current = false;
       setIsDragging(false);
 
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(console.error);
       }
-      send(JSON.stringify({ inst: "need_chunk" }));
-      setTimeout(() => send(JSON.stringify({ inst: "need_chunk" })), 150);
-      setTimeout(() => send(JSON.stringify({ inst: "need_chunk" })), 300);
+      setTimeout(() => {
+        send(JSON.stringify({ inst: "need_chunk" }));
+      }, 50);
     } else if (msg.type === "song_info") {
       const imageUrl = base64ToUrl(msg.info.thumbnail);
 
@@ -113,20 +119,47 @@ function Home() {
       audioRef.current.src = URL.createObjectURL(ms);
     }
 
+    const handleUpdateEnd = () => {
+      const sb = sourceBufferRef.current;
+      const audio = audioRef.current;
+      if (!sb || !audio) return;
+      const nextChunk = queueRef.current.shift();
+
+      if (nextChunk) {
+        try {
+          if (!sb.updating) {
+            sb.appendBuffer(nextChunk);
+          } else {
+            queueRef.current.unshift(nextChunk);
+          }
+        } catch (e) {
+          console.error("Error during appendBuffer:", e);
+          isWaitingForChunk.current = false;
+        }
+      } else {
+        isWaitingForChunk.current = false;
+        checkBufferAndRequest();
+
+        if (audio.paused && !isDragging && sb.buffered.length > 0) {
+          if (serverState.playing) {
+            audio.play().catch(() => {});
+          }
+        }
+      }
+    };
+
     ms.addEventListener("sourceopen", () => {
-      // Important: Use the correct MIME type for your files (e.g., audio/mpeg)
       const sb = ms.addSourceBuffer("audio/mpeg");
       sourceBufferRef.current = sb;
-
-      sb.addEventListener("updateend", () => {
-        if (queueRef.current.length > 0 && !sb.updating) {
-          sb.appendBuffer(queueRef.current.shift()!);
-        }
-      });
+      sb.addEventListener("updateend", handleUpdateEnd);
     });
 
     return () => {
       if (ms.readyState === "open") ms.endOfStream();
+      sourceBufferRef.current?.removeEventListener(
+        "updateend",
+        handleUpdateEnd,
+      );
     };
   }, []);
 
@@ -146,11 +179,12 @@ function Home() {
           audio.currentTime <= buffered.end(i)
         ) {
           bufferedTime = buffered.end(i) - audio.currentTime;
-          break; 
+          break;
         }
       }
 
       if (bufferedTime < 15 && serverState.playing) {
+        console.log("Buffer low:", bufferedTime, "Requesting chunk...");
         isWaitingForChunk.current = true;
         send(JSON.stringify({ inst: "need_chunk" }));
       }
@@ -165,31 +199,44 @@ function Home() {
   // Action Handlers
   // Audio Controls
   const togglePlay = useCallback(() => {
-    const action = serverState.playing ? "pause" : "resume";
-    send(JSON.stringify({ inst: action }));
-  }, [serverState.playing, send]);
+  if (!audioRef.current) return;
+
+  const action = serverState.playing ? "pause" : "resume";
+
+  if (serverState.playing) {
+    audioRef.current.pause();
+  } else {
+    audioRef.current.play().catch(e => console.error("Playback failed:", e));
+  }
+
+  send(JSON.stringify({ inst: action }));
+}, [serverState.playing, send]);
 
   const handleSeek = useCallback(
     (newTime: number) => {
       setServerState((prev) => ({ ...prev, position: newTime }));
       setIsDragging(true);
+      isWaitingForChunk.current = true;
 
       if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
 
       seekTimeoutRef.current = setTimeout(() => {
         queueRef.current = [];
+        const sb = sourceBufferRef.current;
 
-        if (sourceBufferRef.current && !sourceBufferRef.current.updating) {
+        if (sb) {
+          if (sb.updating) sb.abort();
           try {
-            sourceBufferRef.current.remove(0, Number.MAX_SAFE_INTEGER);
+            sb.remove(0, 1000000);
           } catch (e) {
-            console.error(e);
+            console.error("Error clearing buffer:", e);
+            isWaitingForChunk.current = false;
           }
         }
 
         send(JSON.stringify({ inst: "seek", params: { position: newTime } }));
         setIsDragging(false);
-      }, 100);
+      }, 200);
     },
     [send],
   );

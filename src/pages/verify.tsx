@@ -11,7 +11,6 @@ function Verify() {
   const [passcodeError, setPasscodeError] = useState(false);
   const { refreshSession } = useAuth();
   const location = useLocation();
-  const navigator = useNavigate()
   const email = location.state?.emailInputValue;
   const password = location.state?.passwordInputValue;
   
@@ -29,7 +28,7 @@ function Verify() {
 
   const handleContinue = async () => {
     try {
-      const res = await fetch("http://localhost:8080/verify", {
+      const res = await fetch("https://localhost:8080/verify", {
         method: "POST",
         credentials: "include", 
         headers: {
@@ -43,7 +42,6 @@ function Verify() {
       if (!res.ok) {
         throw new Error("Verify failed");
       }
-      navigator("/")
       await refreshSession();
 
     } catch (error) {
@@ -55,7 +53,7 @@ function Verify() {
 
   const request_new_code = async () => {
     try {
-      const res = await fetch("http://localhost:8080/login", {
+      const res = await fetch("https://localhost:8080/login", {
       method: "POST",
       credentials: "include", 
       headers: {

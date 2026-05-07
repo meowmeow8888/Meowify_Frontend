@@ -15,7 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = async () => {
     try {
-      const res = await fetch("http://localhost:8080/me", {
+      const res = await fetch("https://localhost:8080/me", {
         credentials: "include", 
       });
 
