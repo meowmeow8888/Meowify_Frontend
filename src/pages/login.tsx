@@ -14,7 +14,6 @@ function Login() {
   const [passwordInputValue, setPasswordInputValue] = useState("")
   const [hidePassword, setHidePassword] = useState(true)
   const [isContDisabled, setIsContDisabled] = useState(true)
-  const { refreshSession } = useAuth();
   const [loginError, setLoginError] = useState(false)
 
   const checkSyntax = (email: string) => {

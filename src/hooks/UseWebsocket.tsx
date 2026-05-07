@@ -39,17 +39,18 @@ export function useWebSocket({
   };
 
   const connect = useCallback(() => {
-    // Clean up any existing connection
     if (wsRef.current) {
-      wsRef.current.onclose = null; // prevent reconnect loop
-      wsRef.current.close();
+      wsRef.current.onclose = null; 
+      const old = wsRef.current;
+      wsRef.current = null;
+      old.close();
     }
 
     isManuallyClosed.current = false;
     setStatus("connecting");
 
     const ws = new WebSocket(url);
-    ws.binaryType = "arraybuffer"; // critical for audio chunks
+    ws.binaryType = "arraybuffer"; 
 
     ws.onopen = () => {
       setStatus("connected");
@@ -58,10 +59,8 @@ export function useWebSocket({
 
     ws.onmessage = (event: MessageEvent) => {
       if (event.data instanceof ArrayBuffer) {
-        // Binary frame → treat as audio chunk
         onAudioChunk?.(event.data);
       } else {
-        // Text frame → JSON control message
         try {
           const parsed = JSON.parse(event.data as string);
           onMessage?.(parsed);
@@ -75,7 +74,12 @@ export function useWebSocket({
       setStatus("error");
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log("CLOSE", {
+      code: event.code,
+      reason: event.reason,
+      wasClean: event.wasClean,
+        });
       setStatus("disconnected");
       wsRef.current = null;
 
@@ -86,14 +90,13 @@ export function useWebSocket({
         reconnectAttempts.current += 1;
         reconnectTimer.current = setTimeout(() => {
           connect();
-        }, reconnectDelay * reconnectAttempts.current); // back-off
+        }, reconnectDelay * reconnectAttempts.current); 
       }
     };
 
     wsRef.current = ws;
   }, [url, onAudioChunk, onMessage, reconnectDelay, maxReconnectAttempts]);
 
-  // Connect on mount, disconnect on unmount
   useEffect(() => {
     connect();
     return () => {

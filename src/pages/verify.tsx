@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import logo from "../assets/logo.png";
 import NumberInput from "../components/NumberInput";
 import Button from "../components/Button";
-import { useLocation, useNavigate,  } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../providers/AuthProvider";
 
 function Verify() {
@@ -11,6 +11,7 @@ function Verify() {
   const [passcodeError, setPasscodeError] = useState(false);
   const { refreshSession } = useAuth();
   const location = useLocation();
+  const navigator = useNavigate()
   const email = location.state?.emailInputValue;
   const password = location.state?.passwordInputValue;
   
@@ -42,7 +43,7 @@ function Verify() {
       if (!res.ok) {
         throw new Error("Verify failed");
       }
-
+      navigator("/")
       await refreshSession();
 
     } catch (error) {
